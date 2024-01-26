@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+    <title>ChiRP 🎶🐦 iReal Pro to MIDI</title>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <style>
+      body {
+        background-color: wheat;
+        overflow-x: none;
+      }
+      .hide {
+        display: none;
+      }
+      #error {
+        background-color: brown;
+        color: lightgray;
+      }
+      #github {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+      }
+      #status-bar {
+        position: relative;
+        width: 100%;
+        height: 20px;
+        background-color: wheat;
+      }
+      #progress-bar {
+        position: absolute;
+        width: 0%;
+        height: 100%;
+        background-color: #25F;
+      }
+    </style>
+    <script type="module" src="chirp.mjs"></script>
+  </head>
+  <body>
+    <h1>ChiRP 🎶🐦 iReal Pro to MIDI</h1>
+    <div id="github">
+      <a class="github-button" href="https://github.com/infojunkie/chirp" data-size="large" aria-label="Star infojunkie/chirp on GitHub">Star on GitHub</a>
+    </div>
+    <div>
+      <label for="samples">Choose a sample from the list here</label>&nbsp;
+      <select id="samples">
+        <option value="">-- Choose --</option>
+        <option value="data/jazz1410.txt">Jazz 1410</option>
+        <option value="data/brazilian150.txt">Brazilian 150</option>
+        <option value="data/latin50.txt">Latin 50</option>
+        <option value="data/blues50.txt">Blues 50</option>
+        <option value="data/blues50.txt">Blues 50</option>
+        <option value="data/pop400.txt">Pop 400</option>
+        <option value="data/country50.txt">Country 50</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="upload">Or upload an iReal Pro playlist</label>&nbsp;
+      <input type="file" id="upload" name="upload"/>
+      <span id="error"></span>
+    </div>
+
+    <div>
+      <label for="ireal">Or paste an iReal Pro URI directly</label>&nbsp;
+      <input type="text" size="50" id="ireal" name="ireal" placeholder="irealb://... or irealbook://..."/>
+    </div>
+
+    <template id="sheets-template">
+      <div class="sheet-item">
+        <span class="sheet-title"></span>
+        <span class="sheet-musicxml"></span>
+      </div>
+    </template>
+
+    <div id="status-bar">
+      <div id="progress-bar"></div>
+    </div>
+
+    <div id="sheets">
+    </div>
+</body>
+</html>
