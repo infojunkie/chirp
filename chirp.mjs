@@ -8,18 +8,34 @@ async function populateSheets(ireal) {
   sheets.innerHTML = '';
   progress.style.width = 0;
   for (const [n, song] of playlist.songs.entries()) {
-    const div = template.content.cloneNode(true).querySelector('.sheet-item');
-    div.querySelector('.sheet-title').textContent = song.title;
+    const item = template.content.cloneNode(true).querySelector('.sheet-item');
+    // Song title.
+    item.querySelector('.sheet-title').textContent = song.title;
+    // MusicXML file.
     const filename = song.title.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
     const musicXml = iRealMusicXML.MusicXML.convert(song, {
       notation: 'rhythmic'
     });
-    const a = document.createElement('a');
-    a.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(musicXml));
-    a.setAttribute('download', `${filename}.musicxml`);
-    a.innerText = `${filename}.musicxml`;
-    div.querySelector('.sheet-musicxml').appendChild(a);
-    sheets.appendChild(div);
+    const a1 = document.createElement('a');
+    a1.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(musicXml));
+    a1.setAttribute('download', `${filename}.musicxml`);
+    a1.innerText = `${filename}.musicxml`;
+    item.querySelector('.sheet-musicxml').appendChild(a1);
+    // MIDI file.
+    const formData = new FormData();
+    formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
+    formData.append('globalGroove', 'None');
+    const response = await fetish(window.location.href + 'mma/convert', {
+      method: 'POST',
+      body: formData,
+    });
+    const a2 = document.createElement('a');
+    a2.setAttribute('href', URL.createObjectURL(new Blob([await response.arrayBuffer()], { type: 'audio/midi' })));
+    a2.setAttribute('download', `${filename}.mid`);
+    a2.innerText = `${filename}.mid`;
+    item.querySelector('.sheet-midi').appendChild(a2);
+    // Show the song.
+    sheets.appendChild(item);
     progress.style.width = ((n+1) * 100 / playlist.songs.length) + '%';
     await yielder();
   };
