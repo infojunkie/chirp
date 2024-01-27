@@ -6,7 +6,7 @@
   "scripts": {
     "start": "concurrently --kill-others \"PORT=3000 musicxml-midi\" \"npm run start:develop\"",
     "start:develop": "ws --rewrite '/mma/(.*) -> http://localhost:3000/$1' -p ${PORT:-8080}",
-    "start:server": "ws -p ${PORT:-8082} -z --log.format combined"
+    "start:server": "ws -p ${PORT:-8086} -z --log.format combined"
   },
   "author": "Karim Ratib <karim.ratib@gmail.com> (https://github.com/infojunkie)",
   "license": "GPL-3.0-only",
