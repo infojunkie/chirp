@@ -12,7 +12,9 @@
   "license": "GPL-3.0-only",
   "dependencies": {
     "concurrently": "^8.2.2",
-    "local-web-server": "^5.3.1",
+    "local-web-server": "^5.3.1"
+  },
+  "devDependencies": {
     "musicxml-midi": "github:infojunkie/musicxml-midi"
   }
 }
