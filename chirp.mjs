@@ -1,4 +1,5 @@
 import iRealMusicXML from 'https://cdn.jsdelivr.net/npm/ireal-musicxml/+esm';
+import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
 
 async function populateSheets(ireal) {
   const playlist = new iRealMusicXML.Playlist(ireal);
@@ -7,6 +8,7 @@ async function populateSheets(ireal) {
   const progress = document.getElementById('progress-bar');
   sheets.innerHTML = '';
   progress.style.width = 0;
+  const zip = new JSZip();
   for (const [n, song] of playlist.songs.entries()) {
     const item = template.content.cloneNode(true).querySelector('.sheet-item');
     // Song title.
@@ -16,6 +18,7 @@ async function populateSheets(ireal) {
     const musicXml = iRealMusicXML.MusicXML.convert(song, {
       notation: 'rhythmic'
     });
+    zip.file(`${filename}.musicxml`, musicXml);
     const a1 = document.createElement('a');
     a1.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(musicXml));
     a1.setAttribute('download', `${filename}.musicxml`);
@@ -29,8 +32,10 @@ async function populateSheets(ireal) {
       method: 'POST',
       body: formData,
     });
+    const midiBuffer = await response.arrayBuffer();
+    zip.file(`${filename}.mid`, midiBuffer, { binary: true });
     const a2 = document.createElement('a');
-    a2.setAttribute('href', URL.createObjectURL(new Blob([await response.arrayBuffer()], { type: 'audio/midi' })));
+    a2.setAttribute('href', URL.createObjectURL(new Blob([midiBuffer], { type: 'audio/midi' })));
     a2.setAttribute('download', `${filename}.mid`);
     a2.innerText = `${filename}.mid`;
     item.querySelector('.sheet-midi').appendChild(a2);
@@ -39,6 +44,19 @@ async function populateSheets(ireal) {
     progress.style.width = ((n+1) * 100 / playlist.songs.length) + '%';
     await yielder();
   };
+  // Create zip packages.
+  const item = template.content.cloneNode(true).querySelector('.sheet-item');
+  // Song title.
+  const title = 'ALL SONGS';
+  item.querySelector('.sheet-title').textContent = title;
+  // MusicXML file.
+  const filename = title.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
+  const a3 = document.createElement('a');
+  a3.setAttribute('href', URL.createObjectURL(await zip.generateAsync({type: 'blob'}), { type: 'application/zip' }));
+  a3.setAttribute('download', `${filename}.zip`);
+  a3.innerText = `${filename}.zip`;
+  item.querySelector('.sheet-musicxml').appendChild(a3);
+  sheets.insertBefore(item, sheets.firstChild);
 }
 
 async function handleFileBuffer(buffer) {
