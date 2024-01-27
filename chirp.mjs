@@ -40,20 +40,26 @@ async function populateSheets(ireal) {
     a1.innerText = `musicxml`;
     item.querySelector('.sheet-musicxml').appendChild(a1);
     // MIDI file.
-    const formData = new FormData();
-    formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
-    formData.append('globalGroove', 'None');
-    const response = await fetish(window.location.href + 'mma/convert', {
-      method: 'POST',
-      body: formData,
-    });
-    const midiBuffer = await response.arrayBuffer();
-    zip.file(`${filename}.mid`, midiBuffer, { binary: true });
-    const a2 = document.createElement('a');
-    a2.setAttribute('href', URL.createObjectURL(new Blob([midiBuffer], { type: 'audio/midi' })));
-    a2.setAttribute('download', `${filename}.mid`);
-    a2.innerText = `midi`;
-    item.querySelector('.sheet-midi').appendChild(a2);
+    try {
+      const formData = new FormData();
+      formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
+      formData.append('globalGroove', 'None');
+      const response = await fetish(window.location.href + 'mma/convert', {
+        method: 'POST',
+        body: formData,
+      });
+      const midiBuffer = await response.arrayBuffer();
+      zip.file(`${filename}.mid`, midiBuffer, { binary: true });
+      const a2 = document.createElement('a');
+      a2.setAttribute('href', URL.createObjectURL(new Blob([midiBuffer], { type: 'audio/midi' })));
+      a2.setAttribute('download', `${filename}.mid`);
+      a2.innerText = `midi`;
+      item.querySelector('.sheet-midi').appendChild(a2);
+    }
+    catch (error) {
+      console.error(`Failed to convert ${song.title}: ${error}`);
+      item.querySelector('.sheet-midi').textContent = '⚠';
+    }
     // Show the song.
     sheets.appendChild(item);
     progress.style.width = ((n+1) * 100 / playlist.songs.length) + '%';
