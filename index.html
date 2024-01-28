@@ -33,6 +33,17 @@
         height: 100%;
         background-color: #25F;
       }
+      kbd {
+        border: 2px solid black;
+        box-shadow: 2px 2px black;
+        font-size: .85em;
+        line-height: .85em;
+        display: inline-block;
+        font-weight: 600;
+        letter-spacing: .05em;
+        padding: 3px 5px;
+        white-space: nowrap;
+      }
     </style>
     <script type="module" src="chirp.mjs"></script>
   </head>
@@ -64,6 +75,10 @@
     <div>
       <label for="ireal">Or paste an iReal Pro URI directly</label>&nbsp;
       <input type="text" size="50" id="ireal" name="ireal" placeholder="irealb://... or irealbook://..."/>
+    </div>
+
+    <div>
+      Press <kbd>Esc</kbd> or click <button id="stop">Stop</button> to stop the conversion.
     </div>
 
     <template id="sheets-template">

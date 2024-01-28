@@ -122,10 +122,14 @@ async function handleSampleSelect(e) {
   }
 }
 
+function handleStopButton() {
+  g_state.stop = true;
+}
+
 function handleEscKey(e) {
   if (e.keyCode === 27) {
     e.preventDefault();
-    g_state.stop = true;
+    handleStopButton();
   }
 }
 
@@ -133,6 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('upload').addEventListener('change', handleFileUpload);
   document.getElementById('samples').addEventListener('change', handleSampleSelect);
   document.getElementById('ireal').addEventListener('change', handleIRealChange);
+  document.getElementById('stop').addEventListener('click', handleStopButton);
   window.addEventListener('keydown', handleEscKey);
   const mmaVersion = await (await fetish(window.location.href + 'mma/')).json();
   document.getElementById('version').textContent = JSON.stringify({
