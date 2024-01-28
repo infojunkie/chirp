@@ -1,4 +1,4 @@
-import iRealMusicXML from 'https://cdn.jsdelivr.net/npm/ireal-musicxml/+esm';
+import iRealMusicXML from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13/+esm';
 import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
 
 const g_state = {
@@ -134,6 +134,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('samples').addEventListener('change', handleSampleSelect);
   document.getElementById('ireal').addEventListener('change', handleIRealChange);
   window.addEventListener('keydown', handleEscKey);
+  const mmaVersion = await (await fetish(window.location.href + 'mma/')).json();
+  document.getElementById('version').textContent = JSON.stringify({
+    'musicxml': `${iRealMusicXML.Version.name} v${iRealMusicXML.Version.version}`,
+    'midi': `${mmaVersion.name} v${mmaVersion.version}`
+  });
 });
 
 /**
