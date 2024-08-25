@@ -1,4 +1,4 @@
-import iRealMusicXML from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13/+esm';
+import iRealMusicXML from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13.2/+esm';
 import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
 
 const g_state = {
@@ -29,36 +29,43 @@ async function populateSheets(ireal) {
     // Song title.
     item.querySelector('.sheet-title').textContent = song.title;
     // MusicXML file.
-    const filename = song.title.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
-    const musicXml = iRealMusicXML.MusicXML.convert(song, {
-      notation: 'rhythmic'
-    });
-    zip.file(`${filename}.musicxml`, musicXml);
-    const a1 = document.createElement('a');
-    a1.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(musicXml));
-    a1.setAttribute('download', `${filename}.musicxml`);
-    a1.innerText = `musicxml`;
-    item.querySelector('.sheet-musicxml').appendChild(a1);
-    // MIDI file.
     try {
-      const formData = new FormData();
-      formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
-      formData.append('globalGroove', 'None');
-      const response = await fetish(window.location.href + 'mma/convert', {
-        method: 'POST',
-        body: formData,
+      const filename = song.title.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
+      const musicXml = iRealMusicXML.MusicXML.convert(song, {
+        notation: 'rhythmic'
       });
-      const midiBuffer = await response.arrayBuffer();
-      zip.file(`${filename}.mid`, midiBuffer, { binary: true });
-      const a2 = document.createElement('a');
-      a2.setAttribute('href', URL.createObjectURL(new Blob([midiBuffer], { type: 'audio/midi' })));
-      a2.setAttribute('download', `${filename}.mid`);
-      a2.innerText = `midi`;
-      item.querySelector('.sheet-midi').appendChild(a2);
+      zip.file(`${filename}.musicxml`, musicXml);
+      const a1 = document.createElement('a');
+      a1.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(musicXml));
+      a1.setAttribute('download', `${filename}.musicxml`);
+      a1.innerText = `musicxml`;
+      item.querySelector('.sheet-musicxml').appendChild(a1);
+      // MIDI file.
+      try {
+        const formData = new FormData();
+        formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
+        formData.append('globalGroove', 'None');
+        const response = await fetish(window.location.href + 'mma/convert', {
+          method: 'POST',
+          body: formData,
+        });
+        const midiBuffer = await response.arrayBuffer();
+        zip.file(`${filename}.mid`, midiBuffer, { binary: true });
+        const a2 = document.createElement('a');
+        a2.setAttribute('href', URL.createObjectURL(new Blob([midiBuffer], { type: 'audio/midi' })));
+        a2.setAttribute('download', `${filename}.mid`);
+        a2.innerText = `midi`;
+        item.querySelector('.sheet-midi').appendChild(a2);
+      }
+      catch (error) {
+        console.error(`Failed to convert ${song.title}: ${error}`);
+        item.querySelector('.sheet-midi').textContent = '🛑';
+      }
     }
     catch (error) {
       console.error(`Failed to convert ${song.title}: ${error}`);
-      item.querySelector('.sheet-midi').textContent = '⚠';
+      item.querySelector('.sheet-musicxml').textContent = '💥';
+      item.querySelector('.sheet-midi').textContent = '🛑';
     }
     // Show the song.
     sheets.appendChild(item);
@@ -104,7 +111,8 @@ async function handleIRealChange(e) {
   try {
     await populateSheets(e.target.value);
   }
-  catch {
+  catch (error) {
+    console.error(`Failed to convert iReal Pro URI: ${error}`);
     document.getElementById('error').textContent = 'This URI is not recognized as an iReal Pro playlist.';
     document.getElementById('ireal').value = '';
   }
