@@ -1,12 +1,14 @@
-import iRealMusicXML from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13.2/+esm';
+import iRealMusicXml from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13.2/+esm';
 import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
+import pkg from './package.json' with { type: 'json' };
 
 const g_state = {
-  stop: false
+  stop: false,
+  sheets: [],
 }
 
 async function populateSheets(ireal) {
-  const playlist = new iRealMusicXML.Playlist(ireal);
+  const playlist = new iRealMusicXml.Playlist(ireal);
   const sheets = document.getElementById('sheets');
   const template = document.getElementById('sheets-template');
   const progress = document.getElementById('progress-bar');
@@ -19,28 +21,59 @@ async function populateSheets(ireal) {
   const first = template.content.cloneNode(true).querySelector('.sheet-item');
   const firstTitle = 'ALL SONGS';
   first.querySelector('.sheet-title').textContent = firstTitle;
+  first.querySelector('.sheet-midi').textContent = '';
   sheets.appendChild(first);
 
-  // Create entries for all songs.
+  // First, print the song title.
+  g_state.sheets = Array.apply(null, Array(playlist.songs.length)).map(_ => new Object());
+  for (const [n, song] of playlist.songs.entries()) {
+    const item = template.content.cloneNode(true).querySelector('.sheet-item');
+    item.querySelector('.sheet-title').textContent = song.title;
+    item.dataset.index = n;
+    sheets.appendChild(item);
+  }
+
+  // Second, generate the MusicXML.
   for (const [n, song] of playlist.songs.entries()) {
     if (g_state.stop) break;
 
-    const item = template.content.cloneNode(true).querySelector('.sheet-item');
-    // Song title.
-    item.querySelector('.sheet-title').textContent = song.title;
-    // MusicXML file.
     try {
+      const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
       const filename = song.title.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
-      const musicXml = iRealMusicXML.MusicXML.convert(song, {
+      const musicXml = iRealMusicXml.MusicXML.convert(song, {
         notation: 'rhythmic'
       });
+      g_state.sheets[n].filename = filename;
+      g_state.sheets[n].musicXml = musicXml;
       zip.file(`${filename}.musicxml`, musicXml);
-      const a1 = document.createElement('a');
-      a1.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(musicXml));
-      a1.setAttribute('download', `${filename}.musicxml`);
-      a1.innerText = `musicxml`;
-      item.querySelector('.sheet-musicxml').appendChild(a1);
-      // MIDI file.
+      const a = document.createElement('a');
+      a.setAttribute('href', URL.createObjectURL(new Blob([musicXml], { type: 'text/xml' })));
+      a.setAttribute('download', `${filename}.musicxml`);
+      a.innerText = `musicxml`;
+      item.querySelector('.sheet-musicxml').textContent = '';
+      item.querySelector('.sheet-musicxml').appendChild(a);
+    }
+    catch (error) {
+      console.error(`Failed to convert ${song.title} to MusicXML: ${error}`);
+      item.querySelector('.sheet-musicxml').textContent = '💥';
+      item.querySelector('.sheet-midi').textContent = '🛑';
+    }
+
+    const percentage = (n+1) * 100 / playlist.songs.length;
+    progress.style.width = `${percentage}%`;
+    progress.innerHTML = `MusicXML:&nbsp;${Math.round(percentage)}%`;
+    await yielder();
+  }
+
+  // Third, generate the MIDI.
+  for (const [n, song] of playlist.songs.entries()) {
+    if (g_state.stop) break;
+
+    const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
+    const filename = g_state.sheets[n].filename;
+    const musicXml = g_state.sheets[n].musicXml;
+
+    if (musicXml) {
       try {
         const formData = new FormData();
         formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
@@ -51,35 +84,33 @@ async function populateSheets(ireal) {
         });
         const midiBuffer = await response.arrayBuffer();
         zip.file(`${filename}.mid`, midiBuffer, { binary: true });
-        const a2 = document.createElement('a');
-        a2.setAttribute('href', URL.createObjectURL(new Blob([midiBuffer], { type: 'audio/midi' })));
-        a2.setAttribute('download', `${filename}.mid`);
-        a2.innerText = `midi`;
-        item.querySelector('.sheet-midi').appendChild(a2);
+        const a = document.createElement('a');
+        a.setAttribute('href', URL.createObjectURL(new Blob([midiBuffer], { type: 'audio/midi' })));
+        a.setAttribute('download', `${filename}.mid`);
+        a.innerText = `midi`;
+        item.querySelector('.sheet-midi').textContent = '';
+        item.querySelector('.sheet-midi').appendChild(a);
       }
       catch (error) {
-        console.error(`Failed to convert ${song.title}: ${error}`);
+        console.error(`Failed to convert ${song.title} to MIDI: ${error}`);
         item.querySelector('.sheet-midi').textContent = '🛑';
       }
     }
-    catch (error) {
-      console.error(`Failed to convert ${song.title}: ${error}`);
-      item.querySelector('.sheet-musicxml').textContent = '💥';
-      item.querySelector('.sheet-midi').textContent = '🛑';
-    }
-    // Show the song.
-    sheets.appendChild(item);
-    progress.style.width = ((n+1) * 100 / playlist.songs.length) + '%';
+
+    const percentage = (n+1) * 100 / playlist.songs.length;
+    progress.style.width = `${percentage}%`;
+    progress.innerHTML = `MIDI:&nbsp;${Math.round(percentage)}%`;
     await yielder();
   };
 
   // Add zip package to first entry.
   const filename = firstTitle.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
-  const a3 = document.createElement('a');
-  a3.setAttribute('href', URL.createObjectURL(await zip.generateAsync({type: 'blob'}), { type: 'application/zip' }));
-  a3.setAttribute('download', `${filename}.zip`);
-  a3.innerText = `zip`;
-  first.querySelector('.sheet-musicxml').appendChild(a3);
+  const a = document.createElement('a');
+  a.setAttribute('href', URL.createObjectURL(await zip.generateAsync({type: 'blob'}), { type: 'application/zip' }));
+  a.setAttribute('download', `${filename}.zip`);
+  a.innerText = `zip`;
+  first.querySelector('.sheet-musicxml').textContent = '';
+  first.querySelector('.sheet-musicxml').appendChild(a);
 }
 
 async function handleFileBuffer(buffer) {
@@ -146,22 +177,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('samples').addEventListener('change', handleSampleSelect);
   document.getElementById('ireal').addEventListener('change', handleIRealChange);
   document.getElementById('stop').addEventListener('click', handleStopButton);
-  window.addEventListener('keydown', handleEscKey);
+  window.addEventListener('keydown', handleEscKey, true);
   const mmaVersion = await (await fetish(window.location.href + 'mma/')).json();
   document.getElementById('version').textContent = JSON.stringify({
-    'musicxml': `${iRealMusicXML.Version.name} v${iRealMusicXML.Version.version}`,
+    'app  ': `${pkg.name} v${pkg.version}`,
+    'musicxml': `${iRealMusicXml.Version.name} v${iRealMusicXml.Version.version}`,
     'midi': `${mmaVersion.name} v${mmaVersion.version}`
   });
 });
 
 /**
  * Fetch wrapper to throw an error if the response is not ok.
- * Why indeed? https://github.com/whatwg/fetch/issues/18
  */
-async function fetish(
-  input,
-  init,
-) {
+async function fetish(input, init) {
   const response = await fetch(input, init);
   if (!response.ok) throw new Error(response.statusText);
   return response;

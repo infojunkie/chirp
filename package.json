@@ -1,6 +1,6 @@
 {
   "name": "chirp",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Convert iReal Pro playlists to MusicXML and MIDI",
   "main": "chirp.mjs",
   "scripts": {

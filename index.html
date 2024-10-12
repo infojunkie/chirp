@@ -30,6 +30,9 @@
         top: 5px;
         right: 5px;
       }
+      #help {
+        padding-bottom: 5px;
+      }
       #status-bar {
         position: relative;
         width: 100%;
@@ -39,8 +42,9 @@
       #progress-bar {
         position: absolute;
         width: 0%;
-        height: 100%;
+        height: 20px;
         background-color: #25F;
+        color: white;
       }
       kbd {
         border: 2px solid black;
@@ -62,6 +66,7 @@
     <div id="github">
       <a class="github-button" href="https://github.com/infojunkie/chirp" data-size="large" aria-label="Star infojunkie/chirp on GitHub">Star on GitHub</a>
     </div>
+
     <div>
       <label for="samples">Choose a sample from the list here</label>&nbsp;
       <select id="samples">
@@ -86,25 +91,25 @@
       <input type="text" size="50" id="ireal" name="ireal" placeholder="irealb://... or irealbook://..."/>
     </div>
 
-    <div style="padding-bottom: 5px;">
+    <div id="help">
       Press <kbd>Esc</kbd> or click <button id="stop">Stop</button> to stop the conversion.
     </div>
-
-    <template id="sheets-template">
-      <tr class="sheet-item">
-        <td class="sheet-title"></span>
-        <td class="sheet-musicxml"></span>
-        <td class="sheet-midi"></span>
-      </tr>
-    </template>
 
     <div id="status-bar">
       <div id="progress-bar"></div>
     </div>
 
     <table id="sheets">
-      <tbody>
-      </tbody>
+      <tbody></tbody>
     </table>
-</body>
+
+    <template id="sheets-template">
+      <tr class="sheet-item">
+        <td class="sheet-title"></span>
+        <td class="sheet-musicxml">⏳</span>
+        <td class="sheet-midi">⏳</span>
+      </tr>
+    </template>
+
+  </body>
 </html>
