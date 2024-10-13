@@ -1,4 +1,4 @@
-import iRealMusicXml from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13.2/+esm';
+import iRealMusicXml from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13.4/+esm';
 import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
 import pkg from './package.json' with { type: 'json' };
 
@@ -13,12 +13,13 @@ async function populateSheets(ireal) {
   const sheets = document.getElementById('sheets');
   const template = document.getElementById('sheets-template');
   const progress = document.getElementById('progress-bar');
+  const groove = document.querySelector('input[name="groove"]:checked').value;
   sheets.innerHTML = '';
   progress.style.width = 0;
   const zip = new JSZip();
   g_state.stop = false;
 
-  // Create "All songs" entry at the top, initially empty.
+  // Create playlist entry at the top, initially empty.
   const first = template.content.cloneNode(true).querySelector('.sheet-item');
   first.querySelector('.sheet-title').textContent = playlistName;
   first.querySelector('.sheet-midi').textContent = '';
@@ -41,7 +42,8 @@ async function populateSheets(ireal) {
       const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
       const filename = toFilename(song.title);
       const musicXml = iRealMusicXml.MusicXML.convert(song, {
-        notation: 'rhythmic'
+        notation: 'rhythmic',
+        date: false,
       });
       g_state.sheets[n].filename = filename;
       g_state.sheets[n].musicXml = musicXml;
@@ -61,7 +63,7 @@ async function populateSheets(ireal) {
 
     const percentage = (n+1) * 100 / playlist.songs.length;
     progress.style.width = `${percentage}%`;
-    progress.innerHTML = `MusicXML:&nbsp;${Math.round(percentage)}%`;
+    progress.innerHTML = `MusicXML&nbsp;${Math.round(percentage)}%`;
     await yielder();
   }
 
@@ -77,7 +79,7 @@ async function populateSheets(ireal) {
       try {
         const formData = new FormData();
         formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
-        formData.append('globalGroove', 'None');
+        formData.append('globalGroove', groove);
         const response = await fetish(window.location.href + 'mma/convert', {
           method: 'POST',
           body: formData,
@@ -99,14 +101,17 @@ async function populateSheets(ireal) {
 
     const percentage = (n+1) * 100 / playlist.songs.length;
     progress.style.width = `${percentage}%`;
-    progress.innerHTML = `MIDI:&nbsp;${Math.round(percentage)}%`;
+    progress.innerHTML = `MIDI&nbsp;${Math.round(percentage)}%`;
     await yielder();
   };
 
   // Add zip package to first entry.
   const filename = toFilename(playlistName);
   const a = document.createElement('a');
-  a.setAttribute('href', URL.createObjectURL(await zip.generateAsync({type: 'blob'}), { type: 'application/zip' }));
+  a.setAttribute('href', URL.createObjectURL(await zip.generateAsync({type: 'blob'}, metadata => {
+    progress.style.width = `${metadata.percent}%`;
+    progress.innerHTML = `Zip&nbsp;${Math.round(metadata.percent)}%`;
+  }), { type: 'application/zip' }));
   a.setAttribute('download', `${filename}.zip`);
   a.innerText = `zip`;
   first.querySelector('.sheet-musicxml').textContent = '';
@@ -180,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('keydown', handleEscKey, true);
   const mmaVersion = await (await fetish(window.location.href + 'mma/')).json();
   document.getElementById('version').textContent = JSON.stringify({
-    'app  ': `${pkg.name} v${pkg.version}`,
+    'app': `${pkg.name} v${pkg.version}`,
     'musicxml': `${iRealMusicXml.Version.name} v${iRealMusicXml.Version.version}`,
     'midi': `${mmaVersion.name} v${mmaVersion.version}`
   });
