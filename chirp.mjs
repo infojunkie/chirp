@@ -9,6 +9,7 @@ const g_state = {
 
 async function populateSheets(ireal) {
   const playlist = new iRealMusicXml.Playlist(ireal);
+  const playlistName = playlist.name ?? 'ALL SONGS';
   const sheets = document.getElementById('sheets');
   const template = document.getElementById('sheets-template');
   const progress = document.getElementById('progress-bar');
@@ -19,8 +20,7 @@ async function populateSheets(ireal) {
 
   // Create "All songs" entry at the top, initially empty.
   const first = template.content.cloneNode(true).querySelector('.sheet-item');
-  const firstTitle = 'ALL SONGS';
-  first.querySelector('.sheet-title').textContent = firstTitle;
+  first.querySelector('.sheet-title').textContent = playlistName;
   first.querySelector('.sheet-midi').textContent = '';
   sheets.appendChild(first);
 
@@ -39,7 +39,7 @@ async function populateSheets(ireal) {
 
     try {
       const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
-      const filename = song.title.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
+      const filename = toFilename(song.title);
       const musicXml = iRealMusicXml.MusicXML.convert(song, {
         notation: 'rhythmic'
       });
@@ -104,7 +104,7 @@ async function populateSheets(ireal) {
   };
 
   // Add zip package to first entry.
-  const filename = firstTitle.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
+  const filename = toFilename(playlistName);
   const a = document.createElement('a');
   a.setAttribute('href', URL.createObjectURL(await zip.generateAsync({type: 'blob'}), { type: 'application/zip' }));
   a.setAttribute('download', `${filename}.zip`);
@@ -185,6 +185,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     'midi': `${mmaVersion.name} v${mmaVersion.version}`
   });
 });
+
+/**
+ * Generate a filename.
+ */
+function toFilename(title) {
+  return title.toLowerCase().replace(/[/\\?%*:|"'<>\s]/g, '-');
+}
 
 /**
  * Fetch wrapper to throw an error if the response is not ok.
