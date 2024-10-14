@@ -78,7 +78,7 @@ async function populateSheets(ireal) {
     if (musicXml) {
       try {
         const formData = new FormData();
-        formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }));
+        formData.append('musicXml', new Blob([musicXml], { type: 'text/xml' }), `${filename}.musicxml`);
         formData.append('globalGroove', groove);
         const response = await fetish(window.location.href + 'mma/convert', {
           method: 'POST',
