@@ -1,4 +1,8 @@
-import iRealMusicXml from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@1.13.4/+esm';
+import {
+  Playlist,
+  Version,
+  Converter
+} from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@2.0.0/+esm';
 import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
 import pkg from './package.json' with { type: 'json' };
 
@@ -8,7 +12,7 @@ const g_state = {
 }
 
 async function populateSheets(ireal) {
-  const playlist = new iRealMusicXml.Playlist(ireal);
+  const playlist = new Playlist(ireal);
   const playlistName = playlist.name ?? 'ALL SONGS';
   const sheets = document.getElementById('sheets');
   const template = document.getElementById('sheets-template');
@@ -41,7 +45,7 @@ async function populateSheets(ireal) {
     try {
       const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
       const filename = toFilename(song.title);
-      const musicXml = iRealMusicXml.MusicXML.convert(song, {
+      const musicXml = Converter.convert(song, {
         notation: 'rhythmic',
         date: false,
       });
@@ -186,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mmaVersion = await (await fetish(window.location.href + 'mma/')).json();
   document.getElementById('version').textContent = JSON.stringify({
     'app': `${pkg.name} v${pkg.version}`,
-    'musicxml': `${iRealMusicXml.Version.name} v${iRealMusicXml.Version.version}`,
+    'musicxml': `${Version.name} v${Version.version}`,
     'midi': `${mmaVersion.name} v${mmaVersion.version}`
   });
 });
