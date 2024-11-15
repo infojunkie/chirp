@@ -11,8 +11,9 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="msapplication-config" content="browserconfig.xml">
     <meta name="theme-color" content="#f5deb3">
-    <title>ChiRP 🎶🐦 iReal Pro to MIDI</title>
+    <title>ChiRP 🎶🐦 iReal Pro to MusicXML / MuseScore / MIDI</title>
     <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script src="saxon-js/SaxonJS2.rt.js"></script>
     <style>
       body {
         background-color: #f5deb3;
@@ -62,7 +63,7 @@
   </head>
   <body>
     <code id="version"></code>
-    <h1>ChiRP 🎶🐦 iReal Pro to MusicXML + MIDI</h1>
+    <h1>ChiRP 🎶🐦 iReal Pro to MusicXML / MuseScore / MIDI</h1>
     <div id="github">
       <a class="github-button" href="https://github.com/infojunkie/chirp" data-size="large" aria-label="Star infojunkie/chirp on GitHub">Star on GitHub</a>
     </div>
@@ -113,9 +114,10 @@
 
     <template id="sheets-template">
       <tr class="sheet-item">
-        <td class="sheet-title"></span>
-        <td class="sheet-musicxml">⏳</span>
-        <td class="sheet-midi">⏳</span>
+        <td class="sheet-title"></td>
+        <td class="sheet-musicxml">⏳</td>
+        <td class="sheet-musescore">⏳</td>
+        <td class="sheet-midi">⏳</td>
       </tr>
     </template>
 
