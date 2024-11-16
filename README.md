@@ -1,8 +1,6 @@
 ChiRP 🎶🐦 iReal Pro to MusicXML / MuseScore / MIDI
 ============================
 
-Batch-convert iReal Pro playlists to MusicXML / MuseScore / MIDI.
-
 ![Screenshot](https://github.com/infojunkie/chirp/blob/main/screenshot.png?raw=true)
 
 # Usage
