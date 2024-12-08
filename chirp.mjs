@@ -22,7 +22,7 @@ async function populateSheets(ireal) {
   const sheets = document.getElementById('sheets');
   const template = document.getElementById('sheets-template');
   const progress = document.getElementById('progress-bar');
-  const groove = document.querySelector('input[name="groove"]:checked').value;
+  const groove = 'None';
   sheets.innerHTML = '';
   progress.style.width = 0;
   const zip = new JSZip();
