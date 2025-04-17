@@ -1,6 +1,6 @@
 {
   "name": "chirp",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Web app to batch-convert iReal Pro playlists to MusicXML / MuseScore / MIDI.",
   "main": "chirp.mjs",
   "scripts": {

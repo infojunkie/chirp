@@ -5,6 +5,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@2.0.4/+esm';
 import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
 import pkg from './package.json' with { type: 'json' };
+import { Synthetizer, Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.25.23/+esm';
 
 const BASE_URL = 'https://raw.githubusercontent.com/infojunkie/musicxml-mscx/refs/heads/main/';
 const MSCX_SEF = 'build/mscx.sef.json';
@@ -14,6 +15,9 @@ const LEADSHEET_MSS = 'src/lead-sheet.mss';
 const g_state = {
   stop: false,
   sheets: [],
+  context: new AudioContext(),
+  synth: null,
+  sequencer: null,
 }
 
 async function populateSheets(ireal) {
@@ -44,19 +48,21 @@ async function populateSheets(ireal) {
     sheets.appendChild(item);
   }
 
-  // Generate the MusicXML file.
+  // Loop on all songs.
   for (const [n, song] of playlist.songs.entries()) {
     if (g_state.stop) break;
 
+    // Item information.
+    const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
+    const filename = toFilename(song.title);
+    let musicXml = undefined;
+
+    // Generate the MusicXML file.
     try {
-      const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
-      const filename = toFilename(song.title);
-      const musicXml = Converter.convert(song, {
+      musicXml = Converter.convert(song, {
         notation: 'rhythmic',
         date: false,
       });
-      g_state.sheets[n].filename = filename;
-      g_state.sheets[n].musicXml = musicXml;
       zip.file(`${filename}.musicxml`, musicXml);
       const a = document.createElement('a');
       a.setAttribute('href', URL.createObjectURL(new Blob([musicXml], { type: 'text/xml' })));
@@ -72,20 +78,7 @@ async function populateSheets(ireal) {
       item.querySelector('.sheet-midi').textContent = '🛑';
     }
 
-    const percentage = (n+1) * 100 / playlist.songs.length;
-    progress.style.width = `${percentage}%`;
-    progress.innerHTML = `MusicXML&nbsp;${Math.round(percentage)}%`;
-    await yielder();
-  }
-
-  // Generate the MuseScore file.
-  for (const [n, song] of playlist.songs.entries()) {
-    if (g_state.stop) break;
-
-    const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
-    const filename = g_state.sheets[n].filename;
-    const musicXml = g_state.sheets[n].musicXml;
-
+    // Generate the MuseScore file.
     if (musicXml) {
       try {
         const musescore = await SaxonJS.transform(
@@ -110,24 +103,11 @@ async function populateSheets(ireal) {
       }
       catch (error) {
         console.error(`Failed to convert ${song.title} to MuseScore: ${error}`);
-        item.querySelector('.sheet-musescore').textContent = '🛑';
+        item.querySelector('.sheet-musescore').textContent = '💥';
       }
     }
 
-    const percentage = (n+1) * 100 / playlist.songs.length;
-    progress.style.width = `${percentage}%`;
-    progress.innerHTML = `MuseScore&nbsp;${Math.round(percentage)}%`;
-    await yielder();
-  };
-
-  // Generate the MIDI file.
-  for (const [n, song] of playlist.songs.entries()) {
-    if (g_state.stop) break;
-
-    const item = sheets.querySelector(`.sheet-item[data-index="${n}"]`);
-    const filename = g_state.sheets[n].filename;
-    const musicXml = g_state.sheets[n].musicXml;
-
+    // Generate the MIDI file.
     if (musicXml) {
       try {
         const formData = new FormData();
@@ -145,18 +125,38 @@ async function populateSheets(ireal) {
         a.innerText = `MIDI`;
         item.querySelector('.sheet-midi').textContent = '';
         item.querySelector('.sheet-midi').appendChild(a);
+        item.querySelector('.sheet-play').addEventListener('click', function() {
+          g_state.context.resume();
+          g_state.sequencer?.stop();
+          g_state.sequencer = new Sequencer([{ binary: midiBuffer }], g_state.synth);
+          g_state.sequencer.play();
+          // Reset other playing items.
+          sheets.querySelectorAll('.sheet-item:not(:first-child) .sheet-play.hide').forEach(play => {
+            play.classList.remove('hide');
+            play.parentNode.querySelector('.sheet-stop').classList.add('hide');
+          });
+          this.classList.add('hide');
+          item.querySelector('.sheet-stop').classList.remove('hide');
+        });
+        item.querySelector('.sheet-stop').addEventListener('click', function() {
+          g_state.sequencer?.stop();
+          g_state.sequencer = null;
+          this.classList.add('hide');
+          item.querySelector('.sheet-play').classList.remove('hide');
+        });
+        item.querySelector('.sheet-play').classList.remove('hide');
       }
       catch (error) {
         console.error(`Failed to convert ${song.title} to MIDI: ${error}`);
-        item.querySelector('.sheet-midi').textContent = '🛑';
+        item.querySelector('.sheet-midi').textContent = '💥';
       }
     }
 
     const percentage = (n+1) * 100 / playlist.songs.length;
     progress.style.width = `${percentage}%`;
-    progress.innerHTML = `MIDI&nbsp;${Math.round(percentage)}%`;
+    progress.innerHTML = `${Math.round(percentage)}%`;
     await yielder();
-  };
+  }
 
   // Add zip package to first entry.
   const filename = toFilename(playlistName);
@@ -242,6 +242,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     'musicxml': `${Version.name} v${Version.version}`,
     'midi': `${mmaVersion.name} v${mmaVersion.version}`
   });
+
+  // Init MIDI synth.
+  await g_state.context.audioWorklet.addModule('data/worklet_processor.min.js');
+  g_state.synth = new Synthetizer(g_state.context.destination, await (await fetch('data/GeneralUserGS.sf3')).arrayBuffer());
 });
 
 /**
