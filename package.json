@@ -1,8 +1,7 @@
 {
   "name": "chirp",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Web app to batch-convert iReal Pro playlists to MusicXML / MuseScore / MIDI.",
-  "main": "chirp.mjs",
   "scripts": {
     "start": "concurrently --kill-others \"PORT=3000 musicxml-midi\" \"npm run start:develop\"",
     "start:develop": "ws --rewrite '/mma/(.*) -> http://localhost:3000/$1' -p ${PORT:-8080}",
