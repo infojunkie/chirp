@@ -1,6 +1,6 @@
-import { Version } from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@2.0.4/+esm';
+import { Version } from 'https://cdn.jsdelivr.net/npm/@music-i18n/ireal-musicxml@latest/+esm';
 import pkg from '../package.json' with { type: 'json' };
-import { Synthetizer, Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@3.25.23/+esm';
+import { WorkletSynthesizer as Synthetizer, Sequencer } from 'https://cdn.jsdelivr.net/npm/spessasynth_lib@latest/+esm';
 import { fetish } from './utils.mjs';
 
 const BASE_URL = 'https://raw.githubusercontent.com/infojunkie/musicxml-mscx/refs/heads/main/';
@@ -134,8 +134,8 @@ function handleWorkerMessage(event) {
         item.querySelector('.sheet-midi').appendChild(midi);
         item.querySelector('.sheet-play').addEventListener('click', function() {
           g_state.context.resume();
-          g_state.sequencer?.stop();
-          g_state.sequencer = new Sequencer([{ binary: message.conversion.midiBuffer }], g_state.synthesizer);
+          g_state.sequencer.pause();
+          g_state.sequencer.loadNewSongList([{ binary: message.conversion.midiBuffer }]);
           g_state.sequencer.play();
           // Reset other playing items.
           sheets.querySelectorAll('.sheet-item:not(:first-child) .sheet-play.hide:not(.inactive)').forEach(play => {
@@ -244,8 +244,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Init MIDI synthesizer.
-  await g_state.context.audioWorklet.addModule('data/worklet_processor.min.js');
-  g_state.synthesizer = new Synthetizer(g_state.context.destination, await (await fetch('data/GeneralUserGS.sf3')).arrayBuffer());
+  await g_state.context.audioWorklet.addModule('data/spessasynth_processor.min.js');
+  const soundfont = await (await fetch('data/GeneralUserGS.sf3')).arrayBuffer();
+  g_state.synthesizer = new Synthetizer(g_state.context);
+  g_state.synthesizer.connect(g_state.context.destination);
+  await g_state.synthesizer.soundBankManager.addSoundBank(soundfont, 'main');
+  g_state.sequencer = new Sequencer(g_state.synthesizer);
 
   // Init worker.
   g_state.converter = new Worker(new URL('converter.mjs', import.meta.url), { type: 'module' });

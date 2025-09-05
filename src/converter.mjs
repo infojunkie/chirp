@@ -1,7 +1,7 @@
 import {
   Playlist,
   Converter
-} from 'https://cdn.jsdelivr.net/npm/ireal-musicxml@2.0.4/+esm';
+} from 'https://cdn.jsdelivr.net/npm/@music-i18n/ireal-musicxml@latest/+esm';
 import JSZip from 'https://cdn.jsdelivr.net/npm/@progress/jszip-esm/+esm';
 import { toFilename, fetish, yielder } from './utils.mjs';
 

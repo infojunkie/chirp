@@ -1,19 +1,14 @@
 {
   "name": "chirp",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Web app to batch-convert iReal Pro playlists to MusicXML / MuseScore / MIDI.",
   "scripts": {
-    "start": "concurrently --kill-others \"PORT=3000 musicxml-midi\" \"npm run start:develop\"",
     "start:develop": "ws --rewrite '/mma/(.*) -> http://localhost:3000/$1' -p ${PORT:-8080}",
     "start:server": "ws -p ${PORT:-8086} -z --log.format combined"
   },
   "author": "Karim Ratib <karim.ratib@gmail.com> (https://github.com/infojunkie)",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "concurrently": "^8.2.2",
     "local-web-server": "^5.3.1"
-  },
-  "devDependencies": {
-    "musicxml-midi": "github:infojunkie/musicxml-midi"
   }
 }
