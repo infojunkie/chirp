@@ -133,10 +133,6 @@ function handleWorkerMessage(event) {
         item.querySelector('.sheet-midi').textContent = '';
         item.querySelector('.sheet-midi').appendChild(midi);
         item.querySelector('.sheet-play').addEventListener('click', function() {
-          g_state.context.resume();
-          g_state.sequencer.pause();
-          g_state.sequencer.loadNewSongList([{ binary: message.conversion.midiBuffer }]);
-          g_state.sequencer.play();
           // Reset other playing items.
           sheets.querySelectorAll('.sheet-item:not(:first-child) .sheet-play.hide:not(.inactive)').forEach(play => {
             play.classList.remove('hide');
@@ -144,10 +140,13 @@ function handleWorkerMessage(event) {
           });
           this.classList.add('hide');
           item.querySelector('.sheet-stop').classList.remove('hide');
+          g_state.context.resume();
+          g_state.sequencer = new Sequencer(g_state.synthesizer);
+          g_state.sequencer.loadNewSongList([{ binary: message.conversion.midiBuffer }]);
+          g_state.sequencer.play();
         });
         item.querySelector('.sheet-stop').addEventListener('click', function() {
-          g_state.sequencer?.stop();
-          g_state.sequencer = null;
+          g_state.sequencer.pause();
           this.classList.add('hide');
           item.querySelector('.sheet-play:not(.inactive)').classList.remove('hide');
         });
@@ -249,7 +248,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   g_state.synthesizer = new Synthetizer(g_state.context);
   g_state.synthesizer.connect(g_state.context.destination);
   await g_state.synthesizer.soundBankManager.addSoundBank(soundfont, 'main');
-  g_state.sequencer = new Sequencer(g_state.synthesizer);
 
   // Init worker.
   g_state.converter = new Worker(new URL('converter.mjs', import.meta.url), { type: 'module' });
